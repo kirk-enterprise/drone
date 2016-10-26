@@ -16,14 +16,13 @@ import (
 )
 
 const (
-	pathPull     = "%s/api/queue/pull/%s/%s"
-	pathWait     = "%s/api/queue/wait/%d"
-	pathStream   = "%s/api/queue/stream/%d"
-	pathPush     = "%s/api/queue/status/%d"
-	pathPing     = "%s/api/queue/ping"
-	pathLogs     = "%s/api/queue/logs/%d"
-	pathLogsAuth = "%s/api/queue/logs/%d?access_token=%s"
-
+	pathPull          = "%s/api/queue/pull/%s/%s"
+	pathWait          = "%s/api/queue/wait/%d"
+	pathStream        = "%s/api/queue/stream/%d"
+	pathPush          = "%s/api/queue/status/%d"
+	pathPing          = "%s/api/queue/ping"
+	pathLogs          = "%s/api/queue/logs/%d"
+	pathLogsAuth      = "%s/api/queue/logs/%d?access_token=%s"
 	pathSelf          = "%s/api/user"
 	pathFeed          = "%s/api/user/feed"
 	pathRepos         = "%s/api/user/repos"
@@ -48,12 +47,18 @@ const (
 	pathUser          = "%s/api/users/%s"
 	pathBuildQueue    = "%s/api/builds"
 	pathAgent         = "%s/api/agents"
+	//by kci
+	pathBuildNew    = "%s/api/repos/%s/%s/build"
+	pathReposRemote = "%s/api/user/repos/remote"
 )
 
 type client struct {
-	client *http.Client
-	token  string // auth token
-	base   string // base url
+	client     *http.Client
+	token      string // auth token
+	base       string // base url
+	remoteAddr string // for proxy
+	host       string // for proxy
+	kappid     string // for build
 }
 
 // NewClient returns a client at the specified url.
@@ -67,6 +72,12 @@ func NewClientToken(uri, token string) Client {
 	config := new(oauth2.Config)
 	auther := config.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token})
 	return &client{client: auther, base: uri, token: token}
+}
+
+func NewClientTokenRemoteA(uri, token, remoteAddr, host, kappid string) Client {
+	config := new(oauth2.Config)
+	auther := config.Client(oauth2.NoContext, &oauth2.Token{AccessToken: token})
+	return &client{client: auther, base: uri, token: token, remoteAddr: remoteAddr, host: host, kappid: kappid}
 }
 
 // NewClientTokenTLS returns a client at the specified url that authenticates
@@ -149,6 +160,13 @@ func (c *client) RepoList() ([]*model.Repo, error) {
 	return out, err
 }
 
+func (c *client) RepoRemoteList() ([]*model.RepoLite, error) {
+	var out []*model.RepoLite
+	uri := fmt.Sprintf(pathReposRemote, c.base)
+	err := c.get(uri, &out)
+	return out, err
+}
+
 // RepoPost activates a repository.
 func (c *client) RepoPost(owner string, name string) (*model.Repo, error) {
 	out := new(model.Repo)
@@ -222,6 +240,13 @@ func (c *client) BuildStart(owner, name string, num int, params map[string]strin
 	val := parseToQueryParams(params)
 	uri := fmt.Sprintf(pathBuild, c.base, owner, name, num)
 	err := c.post(uri+"?"+val.Encode(), nil, out)
+	return out, err
+}
+
+func (c *client) BuildNew(owner, name string, in *model.Build) (*model.Build, error) {
+	out := new(model.Build)
+	uri := fmt.Sprintf(pathBuildNew, c.base, owner, name)
+	err := c.post(uri, in, out)
 	return out, err
 }
 
@@ -422,6 +447,19 @@ func (c *client) open(rawurl, method string, in, out interface{}) (io.ReadCloser
 			req.Header.Set("Content-Type", "application/json")
 		}
 	}
+	//log.Debug("remoteAddr ", c.remoteAddr, c.host)
+	if c.remoteAddr != "" {
+		req.URL.Scheme = "http"
+		req.Header.Set("X-Real-IP", c.remoteAddr)
+		req.Header.Set("X-Forwarded-For", c.remoteAddr)
+		req.Header.Set("X-Forwarded-Proto", c.remoteAddr)
+		req.Host = c.host
+	}
+	//--------------------------------------------------------
+	// #todo change this; delete appid -> no need
+	if c.kappid != "" {
+		req.Header.Set("KAPPID", c.kappid)
+	}
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -429,7 +467,8 @@ func (c *client) open(rawurl, method string, in, out interface{}) (io.ReadCloser
 	if resp.StatusCode > http.StatusPartialContent {
 		defer resp.Body.Close()
 		out, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("client error %d: %s", resp.StatusCode, string(out))
+		// return nil, fmt.Errorf("client error %d: %s", resp.StatusCode, string(out))
+		return nil, fmt.Errorf("%d, %s", resp.StatusCode, string(out))
 	}
 	return resp.Body, nil
 }

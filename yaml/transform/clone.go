@@ -12,6 +12,9 @@ func Clone(c *yaml.Config, plugin string) error {
 	case "hg":
 		plugin = "plugins/hg:latest"
 	}
+	if plugin == "plugins/git:latest" {
+		plugin = "kici/kcigit:latest"
+	}
 
 	for _, p := range c.Pipeline {
 		if p.Name == clone {

@@ -30,4 +30,5 @@ type Repo struct {
 	AllowDeploy bool   `json:"allow_deploys"            meddler:"repo_allow_deploys"`
 	AllowTag    bool   `json:"allow_tags"               meddler:"repo_allow_tags"`
 	Hash        string `json:"-"                        meddler:"repo_hash"`
+	KAppId      string `json:"appid"                    meddler:"repo_appid"`
 }

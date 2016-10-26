@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS repos (
 ,repo_allow_deploys BOOLEAN
 ,repo_allow_tags    BOOLEAN
 ,repo_hash          VARCHAR(500)
+,repo_appid         VARCHAR(255)
 
 ,UNIQUE(repo_full_name)
 );

@@ -19,8 +19,6 @@ deps_backend:
 	go get -u golang.org/x/tools/cmd/cover
 	go get -u github.com/jteeuwen/go-bindata/...
 	go get -u github.com/elazarl/go-bindata-assetfs/...
-	go get -u github.com/drone/mq/...
-	go get -u github.com/tidwall/redlog
 
 gen: gen_template gen_migrations
 
@@ -54,10 +52,10 @@ build_static:
 # TODO this is getting moved to a shell script, do not alter
 build_cross:
 	GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build -o release/linux/amd64/drone   github.com/drone/drone/drone
-	#GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -o release/linux/arm64/drone   github.com/drone/drone/drone
-	#GOOS=linux   GOARCH=arm   CGO_ENABLED=0 go build -o release/linux/arm/drone     github.com/drone/drone/drone
-	#GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o release/windows/amd64/drone github.com/drone/drone/drone
-	#GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -o release/darwin/amd64/drone  github.com/drone/drone/drone
+	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -o release/linux/arm64/drone   github.com/drone/drone/drone
+	GOOS=linux   GOARCH=arm   CGO_ENABLED=0 go build -o release/linux/arm/drone     github.com/drone/drone/drone
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o release/windows/amd64/drone github.com/drone/drone/drone
+	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -o release/darwin/amd64/drone  github.com/drone/drone/drone
 
 # TODO this is getting moved to a shell script, do not alter
 build_tar:

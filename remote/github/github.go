@@ -272,7 +272,7 @@ func (c *client) newConfig(redirect string) *oauth2.Config {
 			AuthURL:  fmt.Sprintf("%s/login/oauth/authorize", c.URL),
 			TokenURL: fmt.Sprintf("%s/login/oauth/access_token", c.URL),
 		},
-		RedirectURL: fmt.Sprintf("%s/authorize", redirect),
+		RedirectURL: fmt.Sprintf("%s/v1/user/github/authorize", redirect),
 	}
 }
 

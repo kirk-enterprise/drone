@@ -30,6 +30,7 @@ func secretAddFlags() []cli.Flag {
 				model.EventPush,
 				model.EventTag,
 				model.EventDeploy,
+				model.EventManual,
 			},
 		},
 		cli.StringSliceFlag{

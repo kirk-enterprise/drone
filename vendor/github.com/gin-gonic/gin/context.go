@@ -122,7 +122,9 @@ func (c *Context) AbortWithStatus(code int) {
 // pushes the specified error to `c.Errors`.
 // See Context.Error() for more details.
 func (c *Context) AbortWithError(code int, err error) *Error {
-	c.AbortWithStatus(code)
+	// c.AbortWithStatus(code)
+	c.String(code, err.Error())
+	c.Abort()
 	return c.Error(err)
 }
 

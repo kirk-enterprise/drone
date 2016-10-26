@@ -36,6 +36,8 @@ type Client interface {
 	// access in the host system.
 	RepoList() ([]*model.Repo, error)
 
+	RepoRemoteList() ([]*model.RepoLite, error)
+
 	// RepoPost activates a repository.
 	RepoPost(string, string) (*model.Repo, error)
 
@@ -94,6 +96,9 @@ type Client interface {
 
 	// BuildStart re-starts a stopped build.
 	BuildStart(string, string, int, map[string]string) (*model.Build, error)
+
+	//
+	BuildNew(string, string, *model.Build) (*model.Build, error)
 
 	// BuildStop stops the specified running job for given build.
 	BuildStop(string, string, int, int) error

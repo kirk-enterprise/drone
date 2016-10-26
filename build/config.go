@@ -17,15 +17,16 @@ func (c *Config) Pipeline(spec *yaml.Config) *Pipeline {
 
 	pipeline := Pipeline{
 		engine: c.Engine,
-		pipe:   make(chan *Line, c.Buffer),
-		next:   make(chan error),
-		done:   make(chan error),
+		pipe:   make(chan *Line, c.Buffer), // for log
+		next:   make(chan error),           // for step
+		done:   make(chan error),           // for done
 	}
 
 	var containers []*yaml.Container
 	containers = append(containers, spec.Services...)
 	containers = append(containers, spec.Pipeline...)
 
+	// linked list for containers
 	for _, c := range containers {
 		if c.Disabled {
 			continue
@@ -40,6 +41,7 @@ func (c *Config) Pipeline(spec *yaml.Config) *Pipeline {
 		}
 	}
 
+	// start
 	go func() {
 		pipeline.next <- nil
 	}()

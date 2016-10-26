@@ -1,99 +1,122 @@
 package server
 
 import (
-	"fmt"
-	"regexp"
+	"encoding/base32"
+	"errors"
+	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
 
 	jose "github.com/square/go-jose"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/drone/drone/model"
 	"github.com/drone/drone/remote"
+	"github.com/drone/drone/router/middleware/session"
 	"github.com/drone/drone/shared/httputil"
 	"github.com/drone/drone/shared/token"
 	"github.com/drone/drone/store"
 	"github.com/drone/drone/yaml"
+	"github.com/gorilla/securecookie"
+
+	log "github.com/Sirupsen/logrus"
 	"github.com/drone/mq/stomp"
+	"github.com/gin-gonic/gin"
 )
 
-var skipRe = regexp.MustCompile(`\[(?i:ci *skip|skip *ci)\]`)
+//------------------------------------------------------------
+//                 这个文件是kici添加使用
+//------------------------------------------------------------
 
-func PostHook(c *gin.Context) {
+//------------------------------------------------------------
+// kciIndex login and get user response
+func GetKLogin(c *gin.Context) {
+
+	// when dealing with redirects we may need to adjust the content type. I
+	// cannot, however, remember why, so need to revisit this line.
+	c.Writer.Header().Del("Content-Type")
+
+	tmpuser, err := remote.Login(c, c.Writer, c.Request)
+	if err != nil {
+		log.Errorf("cannot authenticate user. %s", err)
+		c.AbortWithError(400, err)
+		return
+	}
+	// this will happen when the user is redirected by the remote provider as
+	// part of the authorization workflow.
+	if tmpuser == nil {
+		return
+	}
+
+	// get the user from the database
+	u, err := store.GetUserLogin(c, tmpuser.Login)
+	if err != nil {
+
+		// create the user account
+		u = &model.User{
+			Login:  tmpuser.Login,
+			Token:  tmpuser.Token,
+			Secret: tmpuser.Secret,
+			Email:  tmpuser.Email,
+			Avatar: tmpuser.Avatar,
+			Hash: base32.StdEncoding.EncodeToString(
+				securecookie.GenerateRandomKey(32),
+			),
+		}
+
+		// insert the user into the database
+		if err := store.CreateUser(c, u); err != nil {
+			log.Errorf("cannot insert %s. %s", u.Login, err)
+			c.AbortWithError(400, err)
+			return
+		}
+	}
+
+	// update the user meta data and authorization data.
+	u.Token = tmpuser.Token
+	u.Secret = tmpuser.Secret
+	u.Email = tmpuser.Email
+	u.Avatar = tmpuser.Avatar
+
+	// if self-registration is enabled for whitelisted organizations we need to
+	// check the user's organization membership.
+	if err := store.UpdateUser(c, u); err != nil {
+		log.Errorf("cannot update %s. %s", u.Login, err)
+		c.AbortWithError(400, err)
+		return
+	}
+
+	token := token.New(token.UserToken, u.Login)
+	tokenstr, err := token.Sign(u.Hash)
+	if err != nil {
+		log.Errorf("cannot create token for %s. %s", u.Login, err)
+		c.AbortWithError(400, err)
+		return
+	}
+	c.JSON(200, gin.H{"user": u, "token": tokenstr})
+}
+
+//------------------------------------------------------------
+// 使用 message 传送[owner/name] custom message
+func KPostBuild(c *gin.Context) {
 	remote_ := remote.FromContext(c)
+	repo := session.Repo(c)
+	user := session.User(c)
 
-	tmprepo, build, err := remote_.Hook(c.Request)
-	if err != nil {
-		log.Errorf("failure to parse hook. %s", err)
-		c.AbortWithError(400, err)
-		return
-	}
-	if build == nil {
-		c.Writer.WriteHeader(200)
-		return
-	}
-	if tmprepo == nil {
-		log.Errorf("failure to ascertain repo from hook.")
-		c.Writer.WriteHeader(400)
+	build := &model.Build{}
+	if err := c.Bind(build); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	// skip the build if any case-insensitive combination of the words "skip" and "ci"
-	// wrapped in square brackets appear in the commit message
-	skipMatch := skipRe.FindString(build.Message)
-	if len(skipMatch) > 0 {
-		log.Infof("ignoring hook. %s found in %s", skipMatch, build.Commit)
-		c.Writer.WriteHeader(204)
-		return
-	}
-
-	repo, err := store.GetRepoOwnerName(c, tmprepo.Owner, tmprepo.Name)
-	if err != nil {
-		log.Errorf("failure to find repo %s/%s from hook. %s", tmprepo.Owner, tmprepo.Name, err)
+	if repo == nil {
+		err := errors.New("failure to find repo")
+		log.Errorf("%s", err)
 		c.AbortWithError(404, err)
-		return
-	}
-
-	// get the token and verify the hook is authorized
-	parsed, err := token.ParseRequest(c.Request, func(t *token.Token) (string, error) {
-		return repo.Hash, nil
-	})
-	if err != nil {
-		log.Errorf("failure to parse token from hook for %s. %s", repo.FullName, err)
-		c.AbortWithError(400, err)
-		return
-	}
-	if parsed.Text != repo.FullName {
-		log.Errorf("failure to verify token from hook. Expected %s, got %s", repo.FullName, parsed.Text)
-		c.AbortWithStatus(403)
 		return
 	}
 
 	if repo.UserID == 0 {
 		log.Warnf("ignoring hook. repo %s has no owner.", repo.FullName)
 		c.Writer.WriteHeader(204)
-		return
-	}
-	var skipped = true
-	if (build.Event == model.EventPush && repo.AllowPush) ||
-		(build.Event == model.EventPull && repo.AllowPull) ||
-		(build.Event == model.EventDeploy && repo.AllowDeploy) ||
-		(build.Event == model.EventTag && repo.AllowTag) {
-		skipped = false
-	}
-
-	if skipped {
-		log.Infof("ignoring hook. repo %s is disabled for %s events.", repo.FullName, build.Event)
-		c.Writer.WriteHeader(204)
-		return
-	}
-
-	user, err := store.GetUser(c, repo.UserID)
-	if err != nil {
-		log.Errorf("failure to find repo owner %s. %s", repo.FullName, err)
-		c.AbortWithError(500, err)
 		return
 	}
 
@@ -126,7 +149,8 @@ func PostHook(c *gin.Context) {
 	config := ToConfig(c)
 	raw, err := remote_.File(user, repo, build, config.Yaml)
 	if err != nil {
-		log.Errorf("failure to get build config for %s. %s", repo.FullName, err)
+		err = errors.New("failure to get build config for " + repo.FullName + err.Error())
+		log.Error(err.Error())
 		c.AbortWithError(404, err)
 		return
 	}
@@ -153,7 +177,7 @@ func PostHook(c *gin.Context) {
 
 	// verify the branches can be built vs skipped
 	branches := yaml.ParseBranch(raw)
-	if !branches.Match(build.Branch) && build.Event != model.EventTag && build.Event != model.EventDeploy {
+	if !branches.Match(build.Branch) && build.Event != model.EventManual {
 		c.String(200, "Branch does not match restrictions defined in yaml")
 		return
 	}
@@ -181,6 +205,8 @@ func PostHook(c *gin.Context) {
 
 	// and use a transaction
 	var jobs []*model.Job
+	log.Debug("raw yml", string(raw))
+	log.Debug("axes", axes)
 	for num, axis := range axes {
 		jobs = append(jobs, &model.Job{
 			BuildID:     build.ID,
@@ -198,12 +224,6 @@ func PostHook(c *gin.Context) {
 
 	c.JSON(200, build)
 
-	url := fmt.Sprintf("%s/%s/%d", httputil.GetURL(c.Request), repo.FullName, build.Number)
-	err = remote_.Status(user, repo, build, url)
-	if err != nil {
-		log.Errorf("error setting commit status for %s/%d", repo.FullName, build.Number)
-	}
-
 	// get the previous build so that we can send
 	// on status change notifications
 	last, _ := store.GetBuildLastBefore(c, repo, build.Branch, build.ID)
@@ -211,7 +231,6 @@ func PostHook(c *gin.Context) {
 	if err != nil {
 		log.Debugf("Error getting secrets for %s#%d. %s", repo.FullName, build.Number, err)
 	}
-
 	client := stomp.MustFromContext(c)
 	client.SendJSON("/topic/events", model.Event{
 		Type:  model.Enqueued,
@@ -221,7 +240,6 @@ func PostHook(c *gin.Context) {
 		stomp.WithHeader("repo", repo.FullName),
 		stomp.WithHeader("private", strconv.FormatBool(repo.IsPrivate)),
 	)
-
 	for _, job := range jobs {
 		broker, _ := stomp.FromContext(c)
 		broker.SendJSON("/queue/pending", &model.Work{
@@ -246,5 +264,4 @@ func PostHook(c *gin.Context) {
 			),
 		)
 	}
-
 }

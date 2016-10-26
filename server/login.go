@@ -100,7 +100,7 @@ func GetLogin(c *gin.Context) {
 		return
 	}
 
-	exp := time.Now().Add(time.Hour * 72).Unix()
+	exp := time.Now().Add(time.Hour * 72 * 1000).Unix()
 	token := token.New(token.SessToken, u.Login)
 	tokenstr, err := token.SignExpires(u.Hash, exp)
 	if err != nil {
@@ -140,7 +140,7 @@ func GetLoginToken(c *gin.Context) {
 		return
 	}
 
-	exp := time.Now().Add(time.Hour * 72).Unix()
+	exp := time.Now().Add(time.Hour * 72 * 1000).Unix()
 	token := token.New(token.SessToken, user.Login)
 	tokenstr, err := token.SignExpires(user.Hash, exp)
 	if err != nil {

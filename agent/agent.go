@@ -15,6 +15,10 @@ import (
 	"github.com/drone/drone/yaml"
 	"github.com/drone/drone/yaml/expander"
 	"github.com/drone/drone/yaml/transform"
+
+	"encoding/json"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type Logger interface {
@@ -22,18 +26,17 @@ type Logger interface {
 }
 
 type Agent struct {
-	Update         UpdateFunc
-	Logger         LoggerFunc
-	Engine         build.Engine
-	Timeout        time.Duration
-	Platform       string
-	Namespace      string
-	Disable        []string
-	Escalate       []string
-	Netrc          []string
-	Local          string
-	Pull           bool
-	ConcealSecrets bool
+	Update    UpdateFunc
+	Logger    LoggerFunc
+	Engine    build.Engine
+	Timeout   time.Duration
+	Platform  string
+	Namespace string
+	Disable   []string
+	Escalate  []string
+	Netrc     []string
+	Local     string
+	Pull      bool
 }
 
 func (a *Agent) Poll() error {
@@ -128,6 +131,14 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 	}
 
 	conf, err := yaml.ParseString(w.Yaml)
+	log.Debug("-----------------------------")
+	log.Debug("w.Yaml ", w.Yaml)
+	confs, _ := json.Marshal(conf)
+	log.Debug("-----------------------------")
+	log.Debug("conf", string(confs))
+	log.Debug("-----------------------------")
+	log.Debugf("repo %+v", w.Repo)
+	log.Debug("-----------------------------")
 	if err != nil {
 		return nil, err
 	}
@@ -141,35 +152,49 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 		src = filepath.Join(src, url.Host, url.Path)
 	}
 
+	// Clone transforms the Yaml to include a clone step. -> plugin = "kici/kcigit:latest"
 	transform.Clone(conf, w.Repo.Kind)
+	// Set proxy for container
 	transform.Environ(conf, envs)
+	// if status/event Constraints empty => emptyInclude StatusSuccess; pulgin Exclude -> model.EventPull
 	transform.DefaultFilter(conf)
 	if w.BuildLast != nil {
+		// modify status change to success or fail
 		transform.ChangeFilter(conf, w.BuildLast.Status)
 	}
-
+	// inject image auth info => 可用于
 	transform.ImageSecrets(conf, secrets, w.Build.Event)
 	transform.Identifier(conf)
 	transform.WorkspaceTransform(conf, "/drone", src)
 
+	// trusted -> priviledge param
 	if err := transform.Check(conf, w.Repo.IsTrusted); err != nil {
 		return nil, err
 	}
 
 	transform.CommandTransform(conf)
+	// always pull latest plugin images?
 	transform.ImagePull(conf, a.Pull)
+	// add :latest if no tag
 	transform.ImageTag(conf)
+	// enable privileged mode for  white-listed plugins
 	if err := transform.ImageEscalate(conf, a.Escalate); err != nil {
 		return nil, err
 	}
+	// container.Vargs -> plugin_env
 	transform.PluginParams(conf)
 
 	if a.Local != "" {
 		transform.PluginDisable(conf, a.Disable)
 		transform.ImageVolume(conf, []string{a.Local + ":" + conf.Workspace.Path})
 	}
-
+	// all container of job share network with pod
 	transform.Pod(conf, a.Platform)
+
+	log.Debug("-----------------------------")
+	confs, _ = json.Marshal(conf)
+	log.Debug("conf after transform ", string(confs))
+	log.Debug("-----------------------------")
 
 	return conf, nil
 }
@@ -189,7 +214,6 @@ func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool)
 		return err
 	}
 
-	secretsReplacer := newSecretsReplacer(payload.Secrets)
 	timeout := time.After(time.Duration(payload.Repo.Timeout) * time.Minute)
 
 	for {
@@ -197,13 +221,13 @@ func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool)
 		case <-pipeline.Done():
 			return pipeline.Err()
 		case <-cancel:
-			pipeline.Stop()
+			pipeline.Stop("termination request received, build cancelled")
 			return fmt.Errorf("termination request received, build cancelled")
 		case <-timeout:
-			pipeline.Stop()
+			pipeline.Stop("maximum time limit exceeded, build cancelled")
 			return fmt.Errorf("maximum time limit exceeded, build cancelled")
 		case <-time.After(a.Timeout):
-			pipeline.Stop()
+			pipeline.Stop("terminal inactive for long time, build cancelled")
 			return fmt.Errorf("terminal inactive for %v, build cancelled", a.Timeout)
 		case <-pipeline.Next():
 
@@ -224,28 +248,18 @@ func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool)
 				payload.Build.Branch,
 				status, payload.Job.Environment) { // TODO: fix this whole section
 
+				log.Debugf(`SKIP %+v NOTMATCH Platform %s Deploy %s
+					Event %s Branch %s status %d Environment %+v`,
+					pipeline.Head().Constraints, a.Platform, payload.Build.Deploy,
+					payload.Build.Event, payload.Build.Branch, status, payload.Job.Environment)
 				pipeline.Skip()
 			} else {
 				pipeline.Exec()
 			}
 		case line := <-pipeline.Pipe():
-			// FIXME(vaijab): avoid checking a.ConcealSecrets is true everytime new line is received
-			if a.ConcealSecrets {
-				line.Out = secretsReplacer.Replace(line.Out)
-			}
 			a.Logger(line)
 		}
 	}
-}
-
-// newSecretsReplacer takes []*model.Secret as secrets and returns a list of
-// secret value, "*****" pairs.
-func newSecretsReplacer(secrets []*model.Secret) *strings.Replacer {
-	var r []string
-	for _, s := range secrets {
-		r = append(r, s.Value, "*****")
-	}
-	return strings.NewReplacer(r...)
 }
 
 func toEnv(w *model.Work) map[string]string {
@@ -289,6 +303,7 @@ func toEnv(w *model.Work) map[string]string {
 		"DRONE_BRANCH":               w.Build.Branch,
 		"DRONE_COMMIT":               w.Build.Commit,
 		"DRONE_VERSION":              version.Version,
+		"DRONE_KAPPID":               w.Repo.KAppId,
 	}
 
 	if w.Build.Event == model.EventTag {

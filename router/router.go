@@ -64,7 +64,7 @@ func Load(middleware ...gin.HandlerFunc) http.Handler {
 
 	teams := e.Group("/api/teams")
 	{
-		teams.Use(session.MustTeamAdmin())
+		//teams.Use(session.MustTeamAdmin())
 
 		team := teams.Group("/:team")
 		{
@@ -108,6 +108,7 @@ func Load(middleware ...gin.HandlerFunc) http.Handler {
 			repo.DELETE("", session.MustRepoAdmin(), server.DeleteRepo)
 			repo.POST("/chown", session.MustRepoAdmin(), server.ChownRepo)
 
+			repo.POST("/build", server.KPostBuild)
 			repo.POST("/builds/:number", session.MustPush, server.PostBuild)
 			repo.DELETE("/builds/:number/:job", session.MustPush, server.DeleteBuild)
 		}
@@ -140,6 +141,15 @@ func Load(middleware ...gin.HandlerFunc) http.Handler {
 		auth.POST("", server.GetLogin)
 		auth.POST("/token", server.GetLoginToken)
 	}
+	// ---------------------------------------------------------------------------
+	// add by kci
+	e.GET("/v1/user/:remote/login", server.GetKLogin)
+	authk := e.Group("/v1/user/:remote/authorize")
+	{
+		authk.GET("", server.GetKLogin)
+		authk.POST("", server.GetKLogin)
+	}
+	// ----------------------------------------------------------------------------
 
 	builds := e.Group("/api/builds")
 	{

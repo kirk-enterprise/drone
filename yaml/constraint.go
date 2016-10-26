@@ -3,6 +3,7 @@ package yaml
 import (
 	"path/filepath"
 
+	"github.com/drone/drone/model"
 	"github.com/drone/drone/yaml/types"
 )
 
@@ -21,7 +22,7 @@ type Constraints struct {
 func (c *Constraints) Match(arch, target, event, branch, status string, matrix map[string]string) bool {
 	return c.Platform.Match(arch) &&
 		c.Environment.Match(target) &&
-		c.Event.Match(event) &&
+		(c.Event.Match(event) || event == model.EventManual) &&
 		c.Branch.Match(branch) &&
 		c.Status.Match(status) &&
 		c.Matrix.Match(matrix)

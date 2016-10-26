@@ -18,6 +18,12 @@ func Config(cli *cli.Context) gin.HandlerFunc {
 	}
 }
 
+// ToConfig returns the config from the Context
+func ToConfig(c *gin.Context) *model.Config {
+	v := c.MustGet("config")
+	return v.(*model.Config)
+}
+
 // helper function to create the configuration from the CLI context.
 func setupConfig(c *cli.Context) *model.Config {
 	return &model.Config{

@@ -33,6 +33,7 @@ CREATE TABLE repos (
 ,repo_allow_deploys BOOLEAN
 ,repo_allow_tags    BOOLEAN
 ,repo_hash          TEXT
+,repo_appid         TEXT
 
 ,UNIQUE(repo_full_name)
 );

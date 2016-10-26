@@ -61,14 +61,26 @@ func (p *Pipeline) Exec() {
 		err := p.exec(p.head.Container)
 		if err != nil {
 			p.err = err
+			p.pipe <- &Line{
+				Proc: p.head.Container.Name,
+				Type: StderrLine,
+				Time: 0,
+				Out:  p.head.Container.Name + " error :" + err.Error(),
+			}
 		}
-		p.step()
+		p.step() //-> nextstep
 	}()
 }
 
 // Skip skips the current step.
 func (p *Pipeline) Skip() {
-	p.step()
+	p.pipe <- &Line{
+		Proc: p.head.Container.Name,
+		Type: ProgressLine,
+		Time: 0,
+		Out:  p.head.Container.Name + " skip",
+	}
+	p.step() //-> nextstep
 }
 
 // Pipe returns the build output pipe.
@@ -86,14 +98,20 @@ func (p *Pipeline) Tail() *yaml.Container {
 	return p.tail.Container
 }
 
-// Stop stops the pipeline.
-func (p *Pipeline) Stop() {
+// Stop stops the pipeline. stop() => done <-
+func (p *Pipeline) Stop(reason string) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				logrus.Errorln("recover stopping the pipeline", r)
 			}
 		}()
+		p.pipe <- &Line{
+			Proc: "STOP",
+			Type: ProgressLine,
+			Time: 0,
+			Out:  "STOPED for reason : " + reason,
+		}
 		p.done <- ErrTerm
 	}()
 }
@@ -106,6 +124,7 @@ func (p *Pipeline) Setup() error {
 // Teardown removes the pipeline environment.
 func (p *Pipeline) Teardown() {
 
+	// docker build image may not remove?
 	for _, id := range p.containers {
 		p.engine.ContainerRemove(id)
 	}
@@ -150,7 +169,7 @@ func (p *Pipeline) step() {
 			}()
 
 			p.head = p.head.next
-			p.next <- nil
+			p.next <- nil // -> Exec or Skip
 		}()
 	}
 }
@@ -168,12 +187,14 @@ func (p *Pipeline) close(err error) {
 }
 
 func (p *Pipeline) exec(c *yaml.Container) error {
-
+	// ContainerStart -> (go ContainerLogs) -> ContainerWait -> (go log for exit code)
 	name, err := p.engine.ContainerStart(c)
 	if err != nil {
 		return err
 	}
 	p.containers = append(p.containers, name)
+
+	logrus.Debugf("wait.add(1) for %s : %s logs", c.Name, name)
 
 	p.wait.Add(1)
 	go func() {
@@ -181,6 +202,8 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 			if r := recover(); r != nil {
 				logrus.Errorln("recover writing build output", r)
 			}
+
+			logrus.Debugf("wait.done() for %s : %s logs", c.Name, name)
 
 			p.wait.Done()
 		}()
@@ -197,6 +220,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 		for scanner.Scan() {
 			p.pipe <- &Line{
 				Proc: c.Name,
+				Type: StdoutLine,
 				Time: int64(time.Since(now).Seconds()),
 				Pos:  num,
 				Out:  scanner.Text(),
@@ -215,6 +239,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 		return err
 	}
 
+	logrus.Debugf("wait.add(1) for %s : %s exit code", c.Name, name)
 	p.wait.Add(1)
 	go func() {
 		defer func() {
@@ -222,6 +247,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 				logrus.Errorln("recover writing exit code to output", r)
 			}
 			p.wait.Done()
+			logrus.Debugf("wait.done() for %s : %s exit code", c.Name, name)
 		}()
 
 		p.pipe <- &Line{

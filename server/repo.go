@@ -21,6 +21,7 @@ func PostRepo(c *gin.Context) {
 	user := session.User(c)
 	owner := c.Param("owner")
 	name := c.Param("name")
+	kappid := c.Request.Header.Get("KAPPID")
 
 	if user == nil {
 		c.AbortWithStatus(403)
@@ -58,6 +59,7 @@ func PostRepo(c *gin.Context) {
 	r.Hash = base32.StdEncoding.EncodeToString(
 		securecookie.GenerateRandomKey(32),
 	)
+	r.KAppId = kappid
 
 	// crates the jwt token used to verify the repository
 	t := token.New(token.HookToken, r.FullName)
