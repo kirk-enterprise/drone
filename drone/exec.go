@@ -53,6 +53,11 @@ var execCmd = cli.Command{
 			Usage:  "build matrix in KEY=VALUE format",
 			EnvVar: "DRONE_MATRIX",
 		},
+		cli.BoolFlag{
+			Name:   "conceal-secrets",
+			Usage:  "conceal secrets from build logs",
+			EnvVar: "DRONE_CONCEAL_SECRETS",
+		},
 		cli.DurationFlag{
 			Name:   "timeout",
 			Usage:  "build timeout",
@@ -326,17 +331,18 @@ func exec(c *cli.Context) error {
 	}
 
 	a := agent.Agent{
-		Update:    agent.NoopUpdateFunc,
-		Logger:    agent.TermLoggerFunc,
-		Engine:    engine,
-		Timeout:   c.Duration("timeout.inactivity"),
-		Platform:  "linux/amd64",
-		Namespace: c.String("namespace"),
-		Disable:   c.StringSlice("plugin"),
-		Escalate:  c.StringSlice("privileged"),
-		Netrc:     []string{},
-		Local:     dir,
-		Pull:      c.Bool("pull"),
+		Update:         agent.NoopUpdateFunc,
+		Logger:         agent.TermLoggerFunc,
+		Engine:         engine,
+		Timeout:        c.Duration("timeout.inactivity"),
+		Platform:       "linux/amd64",
+		Namespace:      c.String("namespace"),
+		Disable:        c.StringSlice("plugin"),
+		Escalate:       c.StringSlice("privileged"),
+		Netrc:          []string{},
+		Local:          dir,
+		Pull:           c.Bool("pull"),
+		ConcealSecrets: c.Bool("conceal-secrets"),
 	}
 
 	payload := &model.Work{
