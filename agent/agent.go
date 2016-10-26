@@ -11,7 +11,6 @@ import (
 
 	"github.com/drone/drone/build"
 	"github.com/drone/drone/model"
-	"github.com/drone/drone/queue"
 	"github.com/drone/drone/version"
 	"github.com/drone/drone/yaml"
 	"github.com/drone/drone/yaml/expander"
@@ -23,17 +22,18 @@ type Logger interface {
 }
 
 type Agent struct {
-	Update    UpdateFunc
-	Logger    LoggerFunc
-	Engine    build.Engine
-	Timeout   time.Duration
-	Platform  string
-	Namespace string
-	Disable   []string
-	Escalate  []string
-	Netrc     []string
-	Local     string
-	Pull      bool
+	Update         UpdateFunc
+	Logger         LoggerFunc
+	Engine         build.Engine
+	Timeout        time.Duration
+	Platform       string
+	Namespace      string
+	Disable        []string
+	Escalate       []string
+	Netrc          []string
+	Local          string
+	Pull           bool
+	ConcealSecrets bool
 }
 
 func (a *Agent) Poll() error {
@@ -48,7 +48,7 @@ func (a *Agent) Poll() error {
 	return nil
 }
 
-func (a *Agent) Run(payload *queue.Work, cancel <-chan bool) error {
+func (a *Agent) Run(payload *model.Work, cancel <-chan bool) error {
 
 	payload.Job.Status = model.StatusRunning
 	payload.Job.Started = time.Now().Unix()
@@ -90,18 +90,22 @@ func (a *Agent) Run(payload *queue.Work, cancel <-chan bool) error {
 	return err
 }
 
-func (a *Agent) prep(w *queue.Work) (*yaml.Config, error) {
+func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 
 	envs := toEnv(w)
 	w.Yaml = expander.ExpandString(w.Yaml, envs)
 
-	// inject the netrc file into the clone plugin if the repository is
-	// private and requires authentication.
+	// append secrets when verified or when a secret does not require
+	// verification
 	var secrets []*model.Secret
-	if w.Verified {
-		secrets = append(secrets, w.Secrets...)
+	for _, secret := range w.Secrets {
+		if w.Verified || secret.SkipVerify {
+			secrets = append(secrets, secret)
+		}
 	}
 
+	// inject the netrc file into the clone plugin if the repository is
+	// private and requires authentication.
 	if w.Repo.IsPrivate {
 		secrets = append(secrets, &model.Secret{
 			Name:   "DRONE_NETRC_USERNAME",
@@ -155,8 +159,6 @@ func (a *Agent) prep(w *queue.Work) (*yaml.Config, error) {
 	transform.CommandTransform(conf)
 	transform.ImagePull(conf, a.Pull)
 	transform.ImageTag(conf)
-	transform.ImageName(conf)
-	transform.ImageNamespace(conf, a.Namespace)
 	if err := transform.ImageEscalate(conf, a.Escalate); err != nil {
 		return nil, err
 	}
@@ -172,7 +174,7 @@ func (a *Agent) prep(w *queue.Work) (*yaml.Config, error) {
 	return conf, nil
 }
 
-func (a *Agent) exec(spec *yaml.Config, payload *queue.Work, cancel <-chan bool) error {
+func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool) error {
 
 	conf := build.Config{
 		Engine: a.Engine,
@@ -187,6 +189,7 @@ func (a *Agent) exec(spec *yaml.Config, payload *queue.Work, cancel <-chan bool)
 		return err
 	}
 
+	secretsReplacer := newSecretsReplacer(payload.Secrets)
 	timeout := time.After(time.Duration(payload.Repo.Timeout) * time.Minute)
 
 	for {
@@ -226,12 +229,26 @@ func (a *Agent) exec(spec *yaml.Config, payload *queue.Work, cancel <-chan bool)
 				pipeline.Exec()
 			}
 		case line := <-pipeline.Pipe():
+			// FIXME(vaijab): avoid checking a.ConcealSecrets is true everytime new line is received
+			if a.ConcealSecrets {
+				line.Out = secretsReplacer.Replace(line.Out)
+			}
 			a.Logger(line)
 		}
 	}
 }
 
-func toEnv(w *queue.Work) map[string]string {
+// newSecretsReplacer takes []*model.Secret as secrets and returns a list of
+// secret value, "*****" pairs.
+func newSecretsReplacer(secrets []*model.Secret) *strings.Replacer {
+	var r []string
+	for _, s := range secrets {
+		r = append(r, s.Value, "*****")
+	}
+	return strings.NewReplacer(r...)
+}
+
+func toEnv(w *model.Work) map[string]string {
 	envs := map[string]string{
 		"CI":                         "drone",
 		"DRONE":                      "true",

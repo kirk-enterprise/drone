@@ -13,7 +13,6 @@ import (
 	"github.com/drone/drone/agent"
 	"github.com/drone/drone/build/docker"
 	"github.com/drone/drone/model"
-	"github.com/drone/drone/queue"
 	"github.com/drone/drone/yaml"
 
 	"github.com/codegangsta/cli"
@@ -48,6 +47,11 @@ var execCmd = cli.Command{
 			Name:   "secrets-file",
 			Usage:  "build secrets file in KEY=VALUE format",
 			EnvVar: "DRONE_SECRETS_FILE",
+		},
+		cli.BoolFlag{
+			Name:   "conceal-secrets",
+			Usage:  "conceal secrets from build logs",
+			EnvVar: "DRONE_CONCEAL_SECRETS",
 		},
 		cli.StringSliceFlag{
 			Name:   "matrix",
@@ -327,20 +331,21 @@ func exec(c *cli.Context) error {
 	}
 
 	a := agent.Agent{
-		Update:    agent.NoopUpdateFunc,
-		Logger:    agent.TermLoggerFunc,
-		Engine:    engine,
-		Timeout:   c.Duration("timeout.inactivity"),
-		Platform:  "linux/amd64",
-		Namespace: c.String("namespace"),
-		Disable:   c.StringSlice("plugin"),
-		Escalate:  c.StringSlice("privileged"),
-		Netrc:     []string{},
-		Local:     dir,
-		Pull:      c.Bool("pull"),
+		Update:         agent.NoopUpdateFunc,
+		Logger:         agent.TermLoggerFunc,
+		Engine:         engine,
+		Timeout:        c.Duration("timeout.inactivity"),
+		Platform:       "linux/amd64",
+		Namespace:      c.String("namespace"),
+		Disable:        c.StringSlice("plugin"),
+		Escalate:       c.StringSlice("privileged"),
+		Netrc:          []string{},
+		Local:          dir,
+		Pull:           c.Bool("pull"),
+		ConcealSecrets: c.Bool("conceal-secrets"),
 	}
 
-	payload := &queue.Work{
+	payload := &model.Work{
 		Yaml:     string(file),
 		Verified: c.BoolT("yaml.verified"),
 		Signed:   c.BoolT("yaml.signed"),
