@@ -2,6 +2,8 @@
 
 PACKAGES = $(shell go list ./... | grep -v /vendor/)
 
+IMAGENAME = wanglei/drone
+
 ifneq ($(shell uname), Darwin)
 	EXTLDFLAGS = -extldflags "-static" $(null)
 else
@@ -49,7 +51,7 @@ build: build_static build_cross
 build_static:
 	go install -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=$(DRONE_BUILD_NUMBER)' github.com/drone/drone/drone
 	mkdir -p release
-	cp $(GOPATH)/bin/drone release/
+	#cp $(GOPATH)/bin/drone release/
 
 # TODO this is getting moved to a shell script, do not alter
 build_cross:
@@ -62,15 +64,18 @@ build_cross:
 # TODO this is getting moved to a shell script, do not alter
 build_tar:
 	tar -cvzf release/linux/amd64/drone.tar.gz   -C release/linux/amd64   drone
-	tar -cvzf release/linux/arm64/drone.tar.gz   -C release/linux/arm64   drone
-	tar -cvzf release/linux/arm/drone.tar.gz     -C release/linux/arm     drone
-	tar -cvzf release/windows/amd64/drone.tar.gz -C release/windows/amd64 drone
-	tar -cvzf release/darwin/amd64/drone.tar.gz  -C release/darwin/amd64  drone
+	#tar -cvzf release/linux/arm64/drone.tar.gz   -C release/linux/arm64   drone
+	#tar -cvzf release/linux/arm/drone.tar.gz     -C release/linux/arm     drone
+	#tar -cvzf release/windows/amd64/drone.tar.gz -C release/windows/amd64 drone
+	#tar -cvzf release/darwin/amd64/drone.tar.gz  -C release/darwin/amd64  drone
 
 # TODO this is getting moved to a shell script, do not alter
 build_sha:
 	sha256sum release/linux/amd64/drone.tar.gz   > release/linux/amd64/drone.sha256
-	sha256sum release/linux/arm64/drone.tar.gz   > release/linux/arm64/drone.sha256
-	sha256sum release/linux/arm/drone.tar.gz     > release/linux/arm/drone.sha256
-	sha256sum release/windows/amd64/drone.tar.gz > release/windows/amd64/drone.sha256
-	sha256sum release/darwin/amd64/drone.tar.gz  > release/darwin/amd64/drone.sha256
+	#sha256sum release/linux/arm64/drone.tar.gz   > release/linux/arm64/drone.sha256
+	#sha256sum release/linux/arm/drone.tar.gz     > release/linux/arm/drone.sha256
+	#sha256sum release/windows/amd64/drone.tar.gz > release/windows/amd64/drone.sha256
+	#sha256sum release/darwin/amd64/drone.tar.gz  > release/darwin/amd64/drone.sha256
+docker:
+	docker build -t $(IMAGENAME)  -f Dockerfile.amd64 .
+

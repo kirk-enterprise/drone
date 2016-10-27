@@ -1,4 +1,4 @@
-docker rm -f drone
+docker rm -f drone_master
 docker run \
   --env DRONE_DEBUG=true\
   --env DRONE_GITHUB=true\
@@ -10,15 +10,14 @@ docker run \
   --env DRONE_YAML=".kci.yml" \
   --env DATABASE_DRIVER=mysql \
   --env DATABASE_CONFIG="root:root@tcp(192.168.99.100:3306)/drone?parseTime=true"\
-  --volume /var/lib/drone:/var/lib/drone \
   --restart=always \
   --publish=5002:8000 \
   --detach=true \
-  --name=drone \
-  k-drone
+  --name=drone_master \
+  wanglei/drone
 
 
-docker rm -f dragent 
+docker rm -f drone_agent 
 docker run \
   --env DRONE_DEBUG=true\
   --env DRONE_SERVER=ws://192.168.99.100:5002/ws/broker \
@@ -27,5 +26,5 @@ docker run \
   --volume /var/run/docker.sock:/var/run/docker.sock \
 	--restart=always \
 	--detach=true \
-	--name=dragent \
-	k-drone agent
+	--name=drone_agent \
+  wanglei/drone agent

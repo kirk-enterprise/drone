@@ -1,9 +1,9 @@
-export GOPATH=$(cd ../../../../;pwd)
-export PATH="$PATH:$GOPATH/bin"
+root=(../../../)
+source $root/env.sh
 
-#make deps
+
+make deps
 make gen     # Generate code
 make build 
-
-docker build -t k-drone  -f Dockerfile.amd64 .
+make docker
 
