@@ -64,9 +64,10 @@
 			"revisionTime": "2015-08-30T00:43:03+03:00"
 		},
 		{
+			"checksumSHA1": "/34bQtV1MVHTlrb9yrsPozZej64=",
 			"path": "github.com/elazarl/go-bindata-assetfs",
-			"revision": "bea323321994103859d60197d229f1a94699dde3",
-			"revisionTime": "2015-04-14T21:44:09+03:00"
+			"revision": "9a6736ed45b44bf3835afeebb3034b57ed329f3e",
+			"revisionTime": "2016-08-22T20:44:01Z"
 		},
 		{
 			"path": "github.com/franela/goblin",
@@ -208,7 +209,6 @@
 		},
 		{
 			"checksumSHA1": "+HvW+k8YkDaPKwF0Lwcz+Tf2A+E=",
-			"origin": "github.com/drone/drone/vendor/github.com/samalba/dockerclient",
 			"path": "github.com/samalba/dockerclient",
 			"revision": "91d7393ff85980ba3a8966405871a3d446ca28f2",
 			"revisionTime": "2016-04-14T17:47:13Z"

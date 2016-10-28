@@ -38,6 +38,7 @@ type Agent struct {
 	Local          string
 	Pull           bool
 	ConcealSecrets bool
+	KciRegistry    string
 }
 
 func (a *Agent) Poll() error {
@@ -154,7 +155,8 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 	}
 
 	// Clone transforms the Yaml to include a clone step. -> plugin = "kici/kcigit:latest"
-	transform.Clone(conf, w.Repo.Kind)
+	//transform.Clone(conf, w.Repo.Kind)
+	transform.Clone(conf, a.KciRegistry+"/library/plugin_"+w.Repo.Kind+":latest")
 	// Set proxy for container
 	transform.Environ(conf, envs)
 	// if status/event Constraints empty => emptyInclude StatusSuccess; pulgin Exclude -> model.EventPull
@@ -182,6 +184,8 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 	if err := transform.ImageEscalate(conf, a.Escalate); err != nil {
 		return nil, err
 	}
+
+	transform.ImageEscalateScrect(conf)
 	// container.Vargs -> plugin_env
 	transform.PluginParams(conf)
 
@@ -319,7 +323,6 @@ func toEnv(w *model.Work) map[string]string {
 		"DRONE_BRANCH":               w.Build.Branch,
 		"DRONE_COMMIT":               w.Build.Commit,
 		"DRONE_VERSION":              version.Version,
-		"DRONE_KAPPID":               w.Repo.KAppId,
 	}
 
 	if w.Build.Event == model.EventTag {

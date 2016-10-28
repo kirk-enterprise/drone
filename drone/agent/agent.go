@@ -138,6 +138,13 @@ var AgentCmd = cli.Command{
 			Name:   "pull",
 			Usage:  "always pull latest plugin images",
 		},
+
+		cli.StringFlag{
+			EnvVar: "KCI_REGISTRY",
+			Name:   "KciRegistry",
+			Value:  "index.qbox.me",
+			Usage:  "KciRegistry",
+		},
 	},
 }
 
@@ -198,6 +205,7 @@ func start(c *cli.Context) {
 				pull:           c.BoolT("pull"),
 				logs:           int64(c.Int("max-log-size")) * 1000000,
 				concealSecrets: c.Bool("conceal-secrets"),
+				kciRegistry:    c.String("KciRegistry"),
 			},
 		}
 

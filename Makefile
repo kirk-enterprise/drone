@@ -49,7 +49,7 @@ build: build_static build_cross
 #build: build_static build_cross build_tar build_sha
 
 build_static:
-	go install -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=$(DRONE_BUILD_NUMBER)' github.com/drone/drone/drone
+	go install -v  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=$(DRONE_BUILD_NUMBER)' github.com/drone/drone/drone
 	mkdir -p release
 	#cp $(GOPATH)/bin/drone release/
 
@@ -78,4 +78,7 @@ build_sha:
 	#sha256sum release/darwin/amd64/drone.tar.gz  > release/darwin/amd64/drone.sha256
 docker:
 	docker build -t $(IMAGENAME)  -f Dockerfile.amd64 .
+
+push:
+	kirk images push $(IMAGENAME) 
 

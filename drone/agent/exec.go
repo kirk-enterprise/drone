@@ -20,6 +20,7 @@ type config struct {
 	logs           int64
 	timeout        time.Duration
 	concealSecrets bool
+	kciRegistry    string
 }
 
 type pipeline struct {
@@ -50,6 +51,7 @@ func (r *pipeline) run(w *model.Work) {
 		Escalate:       r.config.privileged,
 		Pull:           r.config.pull,
 		ConcealSecrets: r.config.concealSecrets,
+		KciRegistry:    r.config.kciRegistry,
 	}
 
 	cancelFunc := func(m *stomp.Message) {

@@ -22,7 +22,7 @@ docker run \
   --env DRONE_DEBUG=true\
   --env DRONE_SERVER=ws://192.168.99.100:5002/ws/broker \
   --env DRONE_SECRET=123 \
-  --env DRONE_PLUGIN_PRIVILEGED="kici/kcidocker,kici/kcidocker*" \
+  --env DRONE_PLUGIN_PRIVILEGED="index.qbox.me/library/plugin_docker,index.qbox.me/library/plugin_docker:*" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
 	--restart=always \
 	--detach=true \

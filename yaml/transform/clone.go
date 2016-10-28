@@ -1,6 +1,9 @@
 package transform
 
-import "github.com/drone/drone/yaml"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/drone/drone/yaml"
+)
 
 const clone = "clone"
 
@@ -15,6 +18,7 @@ func Clone(c *yaml.Config, plugin string) error {
 	if plugin == "plugins/git:latest" {
 		plugin = "kici/kcigit:latest"
 	}
+	log.Debug("clone plugin ", plugin)
 
 	for _, p := range c.Pipeline {
 		if p.Name == clone {
