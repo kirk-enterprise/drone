@@ -49,7 +49,7 @@ build: build_static build_cross
 #build: build_static build_cross build_tar build_sha
 
 build_static:
-	go install -v  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=$(DRONE_BUILD_NUMBER)' github.com/drone/drone/drone
+	go install -v  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=1' github.com/drone/drone/drone
 	mkdir -p release
 	#cp $(GOPATH)/bin/drone release/
 

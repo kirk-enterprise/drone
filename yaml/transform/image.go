@@ -50,12 +50,13 @@ func ImageEscalate(conf *yaml.Config, patterns []string) error {
 	return nil
 }
 
-func ImageEscalateScrect(conf *yaml.Config) {
+func ImageEscalateScrect(conf *yaml.Config, repotoken string) {
 	for _, c := range conf.Pipeline {
 		if c.Privileged {
 			// todo 加密
 			c.Environment["Drone_PUserName"] = c.AuthConfig.Username
 			c.Environment["Drone_PPassword"] = c.AuthConfig.Password
+			c.Environment["Drone_REPOTOKRN"] = repotoken
 		}
 	}
 }

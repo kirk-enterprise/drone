@@ -6,6 +6,17 @@ import (
 	"github.com/drone/drone/model"
 )
 
+type RepoPatch struct {
+	Owner       string
+	Name        string
+	IsTrusted   *bool  `json:"trusted,omitempty"`
+	Timeout     *int64 `json:"timeout,omitempty"`
+	AllowPull   *bool  `json:"allow_pr,omitempty"`
+	AllowPush   *bool  `json:"allow_push,omitempty"`
+	AllowDeploy *bool  `json:"allow_deploys,omitempty"`
+	AllowTag    *bool  `json:"allow_tags,omitempty"`
+}
+
 // Client is used to communicate with a Drone server.
 type Client interface {
 	// Self returns the currently authenticated user.
@@ -43,6 +54,8 @@ type Client interface {
 
 	// RepoPatch updates a repository.
 	RepoPatch(*model.Repo) (*model.Repo, error)
+
+	RepoPatchV2(*RepoPatch) (*model.Repo, error)
 
 	// RepoChown updates a repository owner.
 	RepoChown(string, string) (*model.Repo, error)

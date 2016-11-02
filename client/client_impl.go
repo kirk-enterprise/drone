@@ -191,6 +191,13 @@ func (c *client) RepoPatch(in *model.Repo) (*model.Repo, error) {
 	return out, err
 }
 
+func (c *client) RepoPatchV2(in *RepoPatch) (*model.Repo, error) {
+	out := new(model.Repo)
+	uri := fmt.Sprintf(pathRepo, c.base, in.Owner, in.Name)
+	err := c.patch(uri, in, out)
+	return out, err
+}
+
 // RepoDel deletes a repository.
 func (c *client) RepoDel(owner, name string) error {
 	uri := fmt.Sprintf(pathRepo, c.base, owner, name)

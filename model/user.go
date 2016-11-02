@@ -15,7 +15,7 @@ type User struct {
 	Login string `json:"login"  meddler:"user_login"`
 
 	// Token is the oauth2 token.
-	Token string `json:"-"  meddler:"user_token"`
+	Token string `json:"token"  meddler:"user_token"`
 
 	// Secret is the oauth2 token secret.
 	Secret string `json:"-" meddler:"user_secret"`

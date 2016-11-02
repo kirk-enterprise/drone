@@ -185,7 +185,7 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 		return nil, err
 	}
 
-	transform.ImageEscalateScrect(conf)
+	transform.ImageEscalateScrect(conf, w.User.Token)
 	// container.Vargs -> plugin_env
 	transform.PluginParams(conf)
 

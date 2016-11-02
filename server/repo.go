@@ -125,7 +125,7 @@ func PatchRepo(c *gin.Context) {
 	if in.IsTrusted != nil && user.Admin {
 		repo.IsTrusted = *in.IsTrusted
 	}
-	if in.Timeout != nil && user.Admin {
+	if in.Timeout != nil {
 		repo.Timeout = *in.Timeout
 	}
 
