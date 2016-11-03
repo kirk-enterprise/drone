@@ -59,7 +59,7 @@ build_cross:
 	#GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -o release/linux/arm64/drone   github.com/drone/drone/drone
 	#GOOS=linux   GOARCH=arm   CGO_ENABLED=0 go build -o release/linux/arm/drone     github.com/drone/drone/drone
 	#GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o release/windows/amd64/drone github.com/drone/drone/drone
-	#GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -o release/darwin/amd64/drone  github.com/drone/drone/drone
+	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -o release/darwin/amd64/drone  github.com/drone/drone/drone
 
 # TODO this is getting moved to a shell script, do not alter
 build_tar:

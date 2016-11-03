@@ -1,18 +1,44 @@
 package main
 
 import (
-	"os"
-
+	"encoding/json"
+	sflag "flag"
+	"fmt"
 	"github.com/drone/drone/drone/agent"
 	"github.com/drone/drone/version"
+	"io/ioutil"
+	"os"
 
 	"github.com/codegangsta/cli"
 	"github.com/ianschenck/envflag"
 	_ "github.com/joho/godotenv/autoload"
 )
 
+func addConfEnv(path string) {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	env := make(map[string]string)
+	err = json.Unmarshal(file, &env)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for name, value := range env {
+		fmt.Println(name, value)
+		os.Setenv(name, value)
+	}
+	return
+}
+
 func main() {
 	envflag.Parse()
+	// 注入来自 -f 配置文件的环境变量
+	confFile := sflag.String("f", "./drone.conf", "config file name")
+	sflag.Parse()
+	addConfEnv(*confFile)
 
 	app := cli.NewApp()
 	app.Name = "drone"
@@ -28,6 +54,11 @@ func main() {
 			Name:   "s, server",
 			Usage:  "server location",
 			EnvVar: "DRONE_SERVER",
+		},
+		cli.StringFlag{
+			Name:   "f, conf",
+			Usage:  "conf location",
+			EnvVar: "DRONE_CONF",
 		},
 	}
 	app.Commands = []cli.Command{

@@ -282,7 +282,6 @@ func server(c *cli.Context) error {
 	} else {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
-
 	// setup the server and start the listener
 	handler := router.Load(
 		ginrus.Ginrus(logrus.StandardLogger(), time.RFC3339, true),
