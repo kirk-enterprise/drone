@@ -51,7 +51,7 @@ build: build_static build_cross
 build_static:
 	go install -v  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=1' github.com/drone/drone/drone
 	mkdir -p release
-	cp $(GOPATH)/bin/drone release/
+	#cp $(GOPATH)/bin/drone release/
 
 # TODO this is getting moved to a shell script, do not alter
 build_cross:

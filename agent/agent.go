@@ -64,6 +64,7 @@ func (a *Agent) Run(payload *model.Work, cancel <-chan bool) error {
 		payload.Job.ExitCode = 255
 		payload.Job.Finished = payload.Job.Started
 		payload.Job.Status = model.StatusError
+		log.Error("pre error ", err.Error())
 		a.Update(payload)
 		return err
 	}
@@ -72,6 +73,7 @@ func (a *Agent) Run(payload *model.Work, cancel <-chan bool) error {
 
 	if err != nil {
 		payload.Job.ExitCode = 255
+		log.Error("exec error ", err.Error())
 		payload.Job.Error = err.Error()
 	}
 	if exitErr, ok := err.(*build.ExitError); ok {
@@ -193,6 +195,8 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 		transform.PluginDisable(conf, a.Disable)
 		transform.ImageVolume(conf, []string{a.Local + ":" + conf.Workspace.Path})
 	}
+	cacheDir := "/kci_cache/" + w.Repo.Owner
+	transform.ImageVolume(conf, []string{cacheDir + ":" + cacheDir})
 	// all container of job share network with pod
 	transform.Pod(conf, a.Platform)
 
