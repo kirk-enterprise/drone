@@ -31,6 +31,7 @@ var upgrader = websocket.Upgrader{
 
 // HandleUpdate handles build updates from the agent and persists to the database.
 func HandleUpdate(c context.Context, message *stomp.Message) {
+
 	defer func() {
 		message.Release()
 		if r := recover(); r != nil {
@@ -44,7 +45,7 @@ func HandleUpdate(c context.Context, message *stomp.Message) {
 		logrus.Errorf("Invalid input. %s", err)
 		return
 	}
-
+	logrus.Debugf("HandleUpdate %+v", work)
 	// TODO(bradrydzewski) it is really annoying that we have to do this lookup
 	// and I'd prefer not to. The reason we do this is because the Build and Job
 	// have fields that aren't serialized to json and would be reset to their
@@ -86,6 +87,7 @@ func HandleUpdate(c context.Context, message *stomp.Message) {
 		logrus.Errorf("Unable to update job. %s", err)
 		return
 	}
+	logrus.Debugf("UpdateBuildJob %+v %+v ok:%t", build, job, ok)
 
 	if ok {
 		// get the user because we transfer the user form the server to agent

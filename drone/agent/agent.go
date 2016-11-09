@@ -138,7 +138,6 @@ var AgentCmd = cli.Command{
 			Name:   "pull",
 			Usage:  "always pull latest plugin images",
 		},
-
 		cli.StringFlag{
 			EnvVar: "KCI_REGISTRY",
 			Name:   "KciRegistry",

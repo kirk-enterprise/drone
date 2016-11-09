@@ -158,7 +158,7 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 
 	// Clone transforms the Yaml to include a clone step. -> plugin = "kici/kcigit:latest"
 	//transform.Clone(conf, w.Repo.Kind)
-	transform.Clone(conf, a.KciRegistry+"/library/plugin_"+w.Repo.Kind+":latest")
+	transform.Clone(conf, a.KciRegistry+"/kci/plugin_"+w.Repo.Kind+":latest")
 	// Set proxy for container
 	transform.Environ(conf, envs)
 	// if status/event Constraints empty => emptyInclude StatusSuccess; pulgin Exclude -> model.EventPull
