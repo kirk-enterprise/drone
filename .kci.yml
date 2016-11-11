@@ -6,7 +6,6 @@ pipeline:
   test:
     image: index.qiniu.com/kci/golang:1.7
     commands:
-      - make deps gen
       - make test test_mysql
 
   compile:
@@ -35,6 +34,13 @@ pipeline:
     when:
       branch: master
       event: push
+
+  index.qiniu.com/kci/plugin_email:
+    recipients:
+      - wanglei2@qiniu.com
+    when:
+      event: [push, pull_request, tag, deployment]
+      status:  [ failure, success ]
 
 services:
   mysql:
