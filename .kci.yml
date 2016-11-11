@@ -6,7 +6,6 @@ pipeline:
   test:
     image: index.qiniu.com/kci/golang:1.7
     commands:
-      - make deps_backend_kci
       - make test test_mysql
 
   compile:

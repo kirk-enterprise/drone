@@ -54,6 +54,48 @@
 			"revisionTime": "2016-01-25T09:48:45-08:00"
 		},
 		{
+			"checksumSHA1": "+it8I71lD0XehTvBFlKMykWoMD4=",
+			"path": "github.com/drone/drone-ui/dist",
+			"revision": "e66df33b4620917a2e7b59760887cc3eed543664",
+			"revisionTime": "2016-10-24T22:21:04Z"
+		},
+		{
+			"checksumSHA1": "RUI66baan5EsP/4GkbcrJQvAQR8=",
+			"path": "github.com/drone/mq/logger",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
+			"checksumSHA1": "R5hSv7PUZRnOxbyoPKGM9bsZwuI=",
+			"path": "github.com/drone/mq/server",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
+			"checksumSHA1": "B7lkIhkcYJlu2Q+TTAXGarRb9bs=",
+			"path": "github.com/drone/mq/stomp",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
+			"checksumSHA1": "2wsjUgCS25AlmnpLZFoDrfqy5gE=",
+			"path": "github.com/drone/mq/stomp/dialer",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
+			"checksumSHA1": "HyEH+xt7K+WBItcLT19QeBOH9VA=",
+			"path": "github.com/drone/mq/stomp/selector",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
+			"checksumSHA1": "lGGQh481M/lPuIzfOgWpfwh9L+k=",
+			"path": "github.com/drone/mq/stomp/selector/parse",
+			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
+			"revisionTime": "2016-10-24T21:57:58Z"
+		},
+		{
 			"path": "github.com/eknkc/amber",
 			"revision": "144da19a9994994c069f0693294a66dd310e14a4",
 			"revisionTime": "2015-08-30T00:43:03+03:00"

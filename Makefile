@@ -12,9 +12,6 @@ endif
 
 all: gen build_static
 
-deps_backend_kci:
-	go get -u github.com/drone/mq/...
-
 deps: deps_backend deps_frontend
 
 deps_frontend:
@@ -24,7 +21,7 @@ deps_backend:
 	#go get -u golang.org/x/tools/cmd/cover
 	go get -u github.com/jteeuwen/go-bindata/...
 	go get -u github.com/elazarl/go-bindata-assetfs/...
-	go get -u github.com/drone/mq/...
+	govendor update github.com/drone/mq/...
 	#go get -u github.com/tidwall/redlog
 
 gen: gen_template gen_migrations
