@@ -12,6 +12,9 @@ endif
 
 all: gen build_static
 
+deps_backend_kci:
+	go get -u github.com/drone/mq/...
+
 deps: deps_backend deps_frontend
 
 deps_frontend:
