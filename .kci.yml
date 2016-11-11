@@ -32,7 +32,7 @@ pipeline:
   index.qiniu.com/kci/plugin_kodo:
     bucket: tumi
     source: ./release/linux/amd64/drone.tar.gz
-    target: drone.tar.gz
+    target: /drone
     when:
       branch: master
       event: push
