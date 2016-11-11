@@ -1,6 +1,5 @@
 drone/drone
 *.sqlite
-*_gen.go
 #*.css
 *.txt
 *.zip
