@@ -19,7 +19,7 @@ pipeline:
       event: push
 
   index.qiniu.com/kci/plugin_docker:
-    dockfile: Dockfile.amd64
+    dockerfile: Dockerfile.amd64
     repo: wanglei2/drone
     mirror: http://e05f9689.m.daocloud.io
     tag: 
