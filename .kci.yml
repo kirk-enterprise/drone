@@ -1,0 +1,44 @@
+workspace:
+  base: /go
+  path: src/github.com/drone/drone
+
+pipeline:
+  test:
+    image: index.qiniu.com/kci/golang:1.7
+    commands:
+      - make deps gen
+      - make test test_mysql
+
+  compile:
+    image: index.qiniu.com/kci/golang:1.7
+    environment:
+      - GOPATH=/go
+    commands:
+      - export PATH=$PATH:$GOPATH/bin
+      - make build
+    when:
+      event: push
+
+  index.qiniu.com/kci/plugin_docker:
+    repo: wanglei2/drone
+    tag: 
+      - "latest"
+      - "v${DRONE_JOB_STARTED}"
+    when:
+      branch: master
+      event: push
+
+  index.qiniu.com/kci/plugin_kodo:
+    bucket: tumi
+    source: ./release/linux/amd64/drone.tar.gz
+    target: drone.tar.gz
+    when:
+      branch: master
+      event: push
+
+services:
+  mysql:
+    image: index.qiniu.com/library/mysql:latest 
+    environment:
+      - MYSQL_DATABASE=test
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes

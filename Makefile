@@ -45,7 +45,7 @@ test_postgres:
 
 
 # build the release files
-build: build_static build_cross 
+build: build_static build_cross build_tar 
 #build: build_static build_cross build_tar build_sha
 
 build_static:
