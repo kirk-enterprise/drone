@@ -363,17 +363,20 @@ func UpdateBuildJob(c context.Context, build *model.Build, job *model.Job) (bool
 	// calcualte the overall build status and finish time.
 	status := model.StatusSuccess
 	finish := job.Finished
-	for _, job := range jobs {
-		if job.Finished > finish {
-			finish = job.Finished
+	for _, jobi := range jobs {
+		if jobi.ID == job.ID {
+			jobi = job
 		}
-		switch job.Status {
+		if jobi.Finished > finish {
+			finish = jobi.Finished
+		}
+		switch jobi.Status {
 		case model.StatusSuccess:
 			// no-op
 		case model.StatusRunning, model.StatusPending:
 			return false, nil
 		default:
-			status = job.Status
+			status = jobi.Status
 		}
 	}
 

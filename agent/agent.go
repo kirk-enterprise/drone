@@ -39,6 +39,7 @@ type Agent struct {
 	Pull           bool
 	ConcealSecrets bool
 	KciRegistry    string
+	CacheDir       string
 }
 
 func (a *Agent) Poll() error {
@@ -195,8 +196,8 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 		transform.PluginDisable(conf, a.Disable)
 		transform.ImageVolume(conf, []string{a.Local + ":" + conf.Workspace.Path})
 	}
-	cacheDir := "/kci_cache/" + w.Repo.Owner
-	transform.ImageVolume(conf, []string{cacheDir + ":" + cacheDir})
+	cacheDir := a.CacheDir + "/kci_cache/" + w.Repo.Owner
+	transform.ImageVolume(conf, []string{cacheDir + ":" + "/cache/" + w.Repo.Owner})
 	// all container of job share network with pod
 	transform.Pod(conf, a.Platform)
 

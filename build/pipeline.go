@@ -202,9 +202,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 			if r := recover(); r != nil {
 				logrus.Errorln("recover writing build output", r)
 			}
-
 			logrus.Debugf("wait.done() for %s : %s logs", c.Name, name)
-
 			p.wait.Done()
 		}()
 
@@ -218,6 +216,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 		now := time.Now().UTC()
 		scanner := bufio.NewScanner(rc)
 		for scanner.Scan() {
+			logrus.Debug("get line ", num)
 			p.pipe <- &Line{
 				Proc: c.Name,
 				Type: StdoutLine,
@@ -227,6 +226,7 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 			}
 			num++
 		}
+		logrus.Debug("read ContainerLogs end")
 	}()
 
 	// exit when running container in detached mode in background

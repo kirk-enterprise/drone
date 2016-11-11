@@ -144,6 +144,12 @@ var AgentCmd = cli.Command{
 			Value:  "index.qbox.me",
 			Usage:  "KciRegistry",
 		},
+		cli.StringFlag{
+			EnvVar: "KCI_CACHEDIR",
+			Name:   "cacheDir",
+			Value:  "",
+			Usage:  "cacheDir",
+		},
 	},
 }
 
@@ -205,6 +211,7 @@ func start(c *cli.Context) {
 				logs:           int64(c.Int("max-log-size")) * 1000000,
 				concealSecrets: c.Bool("conceal-secrets"),
 				kciRegistry:    c.String("KciRegistry"),
+				cacheDir:       c.String("cacheDir"),
 			},
 		}
 

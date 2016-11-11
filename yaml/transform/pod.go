@@ -68,8 +68,12 @@ func Pod(c *yaml.Config, platform string) error {
 
 	for _, container := range containers {
 		container.VolumesFrom = append(container.VolumesFrom, ambassador.ID)
-		if container.Network == "" {
-			container.Network = network
+		if container.Privileged && container.Network == "" {
+			container.Network = "host"
+		} else {
+			if container.Network == "" {
+				container.Network = network
+			}
 		}
 	}
 
