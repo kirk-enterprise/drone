@@ -21,7 +21,7 @@ pipeline:
   index.qiniu.com/kci/plugin_docker:
     dockerfile: Dockerfile.amd64
     repo: wanglei2/drone
-    mirror: http://e05f9689.m.daocloud.io
+    mirror: https://akwhf4un.mirror.aliyuncs.com
     tag: 
       - "latest"
       - "v${DRONE_JOB_STARTED}"
