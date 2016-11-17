@@ -8,6 +8,7 @@ type Config struct {
 	Secret string          // Secret token used to authenticate agents
 	Admins map[string]bool // Administrative users
 	Orgs   map[string]bool // Organization whitelist
+	Active map[string]bool // Active action
 }
 
 // IsAdmin returns true if the user is a member of the administrator list.

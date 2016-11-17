@@ -123,6 +123,14 @@ var serverCmd = cli.Command{
 				"user:email",
 				"read:org",
 			},
+		}, cli.StringSliceFlag{
+			EnvVar: "DRONE_ACTIVE_ACTION",
+			Name:   "active",
+			Usage:  "drone active action",
+			Value: &cli.StringSlice{
+				"push",
+				"deploy",
+			},
 		},
 		cli.StringFlag{
 			EnvVar: "DRONE_GITHUB_GIT_USERNAME",

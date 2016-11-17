@@ -196,14 +196,15 @@ func (p *Pipeline) exec(c *yaml.Container) error {
 
 	logrus.Debugf("wait.add(1) for %s : %s logs", c.Name, name)
 
-	p.wait.Add(1)
+	//p.wait.Add(1)
+	// wanglei : do not wait for logs after exit -> try for bug not return
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				logrus.Errorln("recover writing build output", r)
 			}
 			logrus.Debugf("wait.done() for %s : %s logs", c.Name, name)
-			p.wait.Done()
+			//p.wait.Done()
 		}()
 
 		rc, rerr := p.engine.ContainerLogs(name)

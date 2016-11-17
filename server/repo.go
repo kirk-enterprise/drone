@@ -53,8 +53,9 @@ func PostRepo(c *gin.Context) {
 	// set the repository owner to the
 	// currently authenticated user.
 	r.UserID = user.ID
-	r.AllowPush = true
-	r.AllowPull = true
+	acs := ToConfig(c).Active
+	r.AllowPull, r.AllowPush = acs["pull"], acs["push"]
+	r.AllowTag, r.AllowDeploy = acs["tag"], acs["deploy"]
 	r.Timeout = 60 // 1 hour default build time
 	r.Hash = base32.StdEncoding.EncodeToString(
 		securecookie.GenerateRandomKey(32),

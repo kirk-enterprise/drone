@@ -33,6 +33,7 @@ func setupConfig(c *cli.Context) *model.Config {
 		Secret: c.String("agent-secret"),
 		Admins: sliceToMap(c.StringSlice("admin")),
 		Orgs:   sliceToMap(c.StringSlice("orgs")),
+		Active: sliceToMap(c.StringSlice("active")),
 	}
 }
 
