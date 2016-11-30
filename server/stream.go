@@ -32,6 +32,7 @@ func LogStream(c *gin.Context) {
 	repo := session.Repo(c)
 	buildn, _ := strconv.Atoi(c.Param("build"))
 	jobn, _ := strconv.Atoi(c.Param("number"))
+	logrus.Debugln("LogStream ", repo.FullName, buildn, jobn)
 
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 
@@ -55,8 +56,9 @@ func LogStream(c *gin.Context) {
 
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		logrus.Errorf("Cannot upgrade websocket. %s", err)
 		if _, ok := err.(websocket.HandshakeError); !ok {
-			logrus.Errorf("Cannot upgrade websocket. %s", err)
+			logrus.Errorf("HandshakeError. %s", err)
 		}
 		return
 	}
@@ -108,9 +110,9 @@ func LogStream(c *gin.Context) {
 func EventStream(c *gin.Context) {
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		if _, ok := err.(websocket.HandshakeError); !ok {
-			logrus.Errorf("Cannot upgrade websocket. %s", err)
-		}
+		//if _, ok := err.(websocket.HandshakeError); !ok {
+		logrus.Errorf("Cannot upgrade websocket. %s", err)
+		//}
 		return
 	}
 	logrus.Debugf("Successfull upgraded websocket")
@@ -166,6 +168,7 @@ func EventStream(c *gin.Context) {
 			case <-tick.C:
 				err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait))
 				if err != nil {
+					logrus.Errorf("WriteControl error. %s", err)
 					return
 				}
 			}
@@ -186,6 +189,7 @@ func reader(ws *websocket.Conn) {
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
+			logrus.Errorf("ReadMessage error. %s", err)
 			break
 		}
 	}

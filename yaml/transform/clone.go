@@ -16,7 +16,7 @@ func Clone(c *yaml.Config, plugin string) error {
 		plugin = "plugins/hg:latest"
 	}
 	if plugin == "plugins/git:latest" {
-		plugin = "kici/kcigit:latest"
+		plugin = "kci/kcigit:latest"
 	}
 	log.Debug("clone plugin ", plugin)
 

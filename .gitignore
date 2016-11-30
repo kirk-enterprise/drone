@@ -23,3 +23,5 @@ vendor/github.com/bugagazavr
 
 # IDE/Editor stuff
 .idea
+
+shared/kci/kcrypto.go
