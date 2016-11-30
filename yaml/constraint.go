@@ -9,6 +9,9 @@ import (
 
 // Constraints define constraints for container execution.
 type Constraints struct {
+	Repo        Constraint
+	Ref         Constraint
+	Refspec     Constraint
 	Platform    Constraint
 	Environment Constraint
 	Event       Constraint

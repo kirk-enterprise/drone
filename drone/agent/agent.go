@@ -75,11 +75,6 @@ var AgentCmd = cli.Command{
 			Name:   "drone-secret",
 			Usage:  "drone agent secret",
 		},
-		cli.BoolFlag{
-			Name:   "conceal-secrets",
-			Usage:  "conceal secrets from build logs",
-			EnvVar: "DRONE_CONCEAL_SECRETS",
-		},
 		cli.DurationFlag{
 			EnvVar: "DRONE_BACKOFF",
 			Name:   "backoff",
@@ -203,15 +198,14 @@ func start(c *cli.Context) {
 			drone:  client,
 			docker: docker,
 			config: config{
-				platform:       c.String("docker-os") + "/" + c.String("docker-arch"),
-				timeout:        c.Duration("timeout"),
-				namespace:      c.String("namespace"),
-				privileged:     c.StringSlice("privileged"),
-				pull:           c.BoolT("pull"),
-				logs:           int64(c.Int("max-log-size")) * 1000000,
-				concealSecrets: c.Bool("conceal-secrets"),
-				kciRegistry:    c.String("KciRegistry"),
-				cacheDir:       c.String("cacheDir"),
+				platform:    c.String("docker-os") + "/" + c.String("docker-arch"),
+				timeout:     c.Duration("timeout"),
+				namespace:   c.String("namespace"),
+				privileged:  c.StringSlice("privileged"),
+				pull:        c.BoolT("pull"),
+				logs:        int64(c.Int("max-log-size")) * 1000000,
+				kciRegistry: c.String("KciRegistry"),
+				cacheDir:    c.String("cacheDir"),
 			},
 		}
 
@@ -258,7 +252,7 @@ func start(c *cli.Context) {
 			go handler(m) // HACK until we a channel based Subscribe implementation
 		}), opts...)
 
-		logger.Noticef("connection establish, ready to process builds.")
+		logger.Noticef("connection established, ready to process builds.")
 		<-client.Done()
 
 		logger.Warningf("connection interrupted, attempting to reconnect.")
