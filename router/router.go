@@ -153,7 +153,7 @@ func Load(middleware ...gin.HandlerFunc) http.Handler {
 
 	builds := e.Group("/api/builds")
 	{
-		builds.Use(session.MustAdmin())
+		// builds.Use(session.MustAdmin())
 		builds.GET("", server.GetBuildQueue)
 	}
 

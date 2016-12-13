@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS builds (
 ,build_link      VARCHAR(1000)
 
 ,UNIQUE(build_number, build_repo_id)
-);
+)DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX ix_build_repo ON builds (build_repo_id);
 

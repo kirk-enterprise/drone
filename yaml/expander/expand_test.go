@@ -44,5 +44,12 @@ func TestExpand(t *testing.T) {
 			m["TAG"] = "v1.0.0"
 			g.Assert(`echo "1.0.0"`).Equal(ExpandString(s, m))
 		})
+
+		// g.It("Should handle substitution int time to str operations", func() {
+		// 	s := `echo "${TIME#TF#20060102T150405}"`
+		// 	m := map[string]string{}
+		// 	m["TIME"] = "1425726399"
+		// 	g.Assert(`echo "20150307T190639"`).Equal(ExpandString(s, m))
+		// })
 	})
 }

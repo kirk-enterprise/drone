@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // these are helper functions that bring bash-substitution to the drone yaml file.
@@ -21,6 +22,7 @@ var substitutors = []substituteFunc{
 	substituteReplace,
 	substituteLeft,
 	substituteSubstr,
+	substituteTimeItoS,
 }
 
 // substitute is a helper function that substitutes a simple parameter using
@@ -148,6 +150,27 @@ func substituteLeft(str, key, val string) string {
 		}
 
 		str = strings.Replace(str, match[0], val[:index], -1)
+	}
+	return str
+}
+
+//${parameterTFSpos}
+func substituteTimeItoS(str, key, val string) string {
+	key = fmt.Sprintf("\\${%s#TF#([0-9a-zA-Z]*)}", key)
+	reg, err := regexp.Compile(key)
+	if err != nil {
+		return str
+	}
+	for _, match := range reg.FindAllStringSubmatch(str, -1) {
+		fmt.Println("substituteTimeItoS match", len(match))
+		if len(match) != 2 {
+			continue
+		}
+		timei, err := strconv.ParseInt(val, 10, 0)
+		if err != nil {
+			continue // skip
+		}
+		str = strings.Replace(str, match[0], time.Unix(timei, 0).Format(match[1]), -1)
 	}
 	return str
 }
