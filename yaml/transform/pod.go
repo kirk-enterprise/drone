@@ -39,6 +39,8 @@ var lookupAmbassador = map[string]ambassador{
 // Pod transforms the containers in the Yaml to use Pod networking, where every
 // container shares the localhost connection.
 func Pod(c *yaml.Config, platform string) error {
+	// todo set in config
+	ssambassador := "index.qiniu.com/wanglei2/ambassador"
 
 	rand := base64.RawURLEncoding.EncodeToString(
 		securecookie.GenerateRandomKey(8),
@@ -60,6 +62,19 @@ func Pod(c *yaml.Config, platform string) error {
 		Volumes:     []string{c.Workspace.Path, c.Workspace.Base},
 		Environment: map[string]string{},
 	}
+
+	if ssambassador != "" {
+		ambassador = &yaml.Container{
+			ID:          fmt.Sprintf("drone_ambassador_%s", rand),
+			Name:        "ambassador",
+			Image:       ssambassador,
+			Detached:    true,
+			Volumes:     []string{c.Workspace.Path, c.Workspace.Base},
+			Environment: map[string]string{},
+			Privileged:  true,
+		}
+	}
+
 	network := fmt.Sprintf("container:%s", ambassador.ID)
 
 	var containers []*yaml.Container
@@ -68,13 +83,13 @@ func Pod(c *yaml.Config, platform string) error {
 
 	for _, container := range containers {
 		container.VolumesFrom = append(container.VolumesFrom, ambassador.ID)
-		if container.Privileged && container.Network == "" {
-			container.Network = "host"
-		} else {
-			if container.Network == "" {
-				container.Network = network
-			}
+		// if container.Privileged && container.Network == "" {
+		// 	container.Network = "host"
+		// } else {
+		if container.Network == "" {
+			container.Network = network
 		}
+		// }
 	}
 
 	c.Services = append([]*yaml.Container{ambassador}, c.Services...)

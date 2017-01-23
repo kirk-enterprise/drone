@@ -87,6 +87,7 @@ func LogStream(c *gin.Context) {
 		client.Unsubscribe(sub)
 		close(done)
 		close(logs)
+		ws.Close()
 	}()
 
 	for {
@@ -95,6 +96,7 @@ func LogStream(c *gin.Context) {
 			ws.SetWriteDeadline(time.Now().Add(writeWait))
 			ws.WriteMessage(websocket.TextMessage, buf)
 		case <-done:
+			ws.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(writeWait))
 			return
 		case <-ticker.C:
 			err := ws.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait))

@@ -16,7 +16,6 @@ import (
 
 // Load loads the router
 func Load(middleware ...gin.HandlerFunc) http.Handler {
-
 	e := gin.New()
 	e.Use(gin.Recovery())
 

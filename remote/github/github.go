@@ -215,6 +215,9 @@ func (c *client) File(u *model.User, r *model.Repo, b *model.Build, f string) ([
 
 	opts := new(github.RepositoryContentGetOptions)
 	opts.Ref = b.Commit
+	if opts.Ref == "" && b.Ref != "" {
+		opts.Ref = b.Ref
+	}
 	data, _, _, err := client.Repositories.GetContents(r.Owner, r.Name, f, opts)
 	if err != nil {
 		return nil, err

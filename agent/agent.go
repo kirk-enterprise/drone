@@ -113,26 +113,26 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 
 	// inject the netrc file into the clone plugin if the repository is
 	// private and requires authentication.
-	if w.Repo.IsPrivate {
-		secrets = append(secrets, &model.Secret{
-			Name:   "DRONE_NETRC_USERNAME",
-			Value:  w.Netrc.Login,
-			Images: []string{"*"},
-			Events: []string{"*"},
-		})
-		secrets = append(secrets, &model.Secret{
-			Name:   "DRONE_NETRC_PASSWORD",
-			Value:  w.Netrc.Password,
-			Images: []string{"*"},
-			Events: []string{"*"},
-		})
-		secrets = append(secrets, &model.Secret{
-			Name:   "DRONE_NETRC_MACHINE",
-			Value:  w.Netrc.Machine,
-			Images: []string{"*"},
-			Events: []string{"*"},
-		})
-	}
+	//if w.Repo.IsPrivate {
+	secrets = append(secrets, &model.Secret{
+		Name:   "DRONE_NETRC_USERNAME",
+		Value:  w.Netrc.Login,
+		Images: []string{"*"},
+		Events: []string{"*"},
+	})
+	secrets = append(secrets, &model.Secret{
+		Name:   "DRONE_NETRC_PASSWORD",
+		Value:  w.Netrc.Password,
+		Images: []string{"*"},
+		Events: []string{"*"},
+	})
+	secrets = append(secrets, &model.Secret{
+		Name:   "DRONE_NETRC_MACHINE",
+		Value:  w.Netrc.Machine,
+		Images: []string{"*"},
+		Events: []string{"*"},
+	})
+	//}
 
 	conf, err := yaml.ParseString(w.Yaml)
 	log.Debug("-----------------------------")
