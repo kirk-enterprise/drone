@@ -203,17 +203,33 @@ func KPostBuild(c *gin.Context) {
 	build.Status = model.StatusPending
 	build.RepoID = repo.ID
 
+	// Read query string parameters into buildParams, exclude reserved params
+	var buildParams = map[string]string{}
+	for key, val := range c.Request.URL.Query() {
+		switch key {
+		case "fork", "event", "deploy_to", "commit", "branch":
+		default:
+			// We only accept string literals, because build parameters will be
+			// injected as environment variables
+			buildParams[key] = val[0]
+		}
+	}
+
 	// and use a transaction
 	var jobs []*model.Job
 	log.Debug("raw yml", string(raw))
 	log.Debug("axes", axes)
 	for num, axis := range axes {
-		jobs = append(jobs, &model.Job{
+		job := &model.Job{
 			BuildID:     build.ID,
 			Number:      num + 1,
 			Status:      model.StatusPending,
 			Environment: axis,
-		})
+		}
+		for k, v := range buildParams {
+			job.Environment[k] = v
+		}
+		jobs = append(jobs, job)
 	}
 	err = store.CreateBuild(c, build, jobs...)
 	if err != nil {
