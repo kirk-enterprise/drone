@@ -226,13 +226,11 @@ func (r *router) collect(h handler) {
 func (r *router) serve(session *session) error {
 	message, ok := <-session.peer.Receive()
 	if !ok {
-		logger.Debugf("stomp: session.peer.Receive() error 1")
 		return nil
 	}
 
 	// the first message from the client should be STOMP
 	if !bytes.Equal(message.Method, stomp.MethodStomp) {
-		logger.Debugf("stomp: errStompMethod")
 		return errStompMethod
 	}
 
@@ -261,7 +259,6 @@ func (r *router) serve(session *session) error {
 	for {
 		message, ok := <-session.peer.Receive()
 		if !ok {
-			logger.Debugf("stomp: session.peer.Receive() error 2")
 			return nil
 		}
 

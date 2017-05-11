@@ -21,7 +21,7 @@ deps_backend:
 	#go get -u golang.org/x/tools/cmd/cover
 	#go get -u github.com/jteeuwen/go-bindata/...
 	#go get -u github.com/elazarl/go-bindata-assetfs/...
-	#govendor update github.com/drone/mq/...
+	govendor update github.com/drone/mq/...
 	#go get -u github.com/tidwall/redlog
 
 gen: gen_template gen_migrations
@@ -49,7 +49,7 @@ build: build_static build_cross build_tar
 #build: build_static build_cross build_tar build_sha
 
 build_static:
-	go install -v  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=1' github.com/drone/drone/drone
+	go install  -ldflags '${EXTLDFLAGS}-X github.com/drone/drone/version.VersionDev=1' github.com/drone/drone/drone
 	mkdir -p release
 	#cp $(GOPATH)/bin/drone release/
 

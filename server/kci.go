@@ -154,6 +154,9 @@ func KPostBuild(c *gin.Context) {
 		c.AbortWithError(404, err)
 		return
 	}
+
+	// todo # if commitid not exsit
+
 	sec, err := remote_.File(user, repo, build, config.Shasum)
 	if err != nil {
 		log.Debugf("cannot find build secrets for %s. %s", repo.FullName, err)
@@ -207,7 +210,7 @@ func KPostBuild(c *gin.Context) {
 	var buildParams = map[string]string{}
 	for key, val := range c.Request.URL.Query() {
 		switch key {
-		case "fork", "event", "deploy_to", "commit", "branch":
+		case "commit", "branch":
 		default:
 			// We only accept string literals, because build parameters will be
 			// injected as environment variables

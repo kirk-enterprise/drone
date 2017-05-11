@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -177,7 +178,14 @@ func (c *Client) listen() {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Warningf("stomp client: recover panic: %s", r)
-			c.done <- r.(error)
+			err, ok := r.(error)
+			if !ok {
+				logger.Warningf("%v: %s", r, debug.Stack())
+				c.done <- fmt.Errorf("%v", r)
+			} else {
+				logger.Warningf("%s", err)
+				c.done <- err
+			}
 		}
 	}()
 
@@ -228,7 +236,6 @@ func (c *Client) handleMessage(m *Message) {
 }
 
 func (c *Client) sendMessage(m *Message) error {
-	logger.Noticef("sending Message: %s", m)
 	if len(m.Receipt) == 0 {
 		return c.peer.Send(m)
 	}

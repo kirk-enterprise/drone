@@ -99,19 +99,13 @@ func (p *Pipeline) Tail() *yaml.Container {
 }
 
 // Stop stops the pipeline. stop() => done <-
-func (p *Pipeline) Stop(reason string) {
+func (p *Pipeline) Stop() {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				logrus.Errorln("recover stopping the pipeline", r)
 			}
 		}()
-		p.pipe <- &Line{
-			Proc: "STOP",
-			Type: ProgressLine,
-			Time: 0,
-			Out:  "STOPED for reason : " + reason,
-		}
 		p.done <- ErrTerm
 	}()
 }

@@ -18,6 +18,9 @@ import (
 	"github.com/samalba/dockerclient"
 )
 
+var cancelStore = map[int64]string{}
+var cancelStoreLock sync.Mutex
+
 // AgentCmd is the exported command for starting the drone agent.
 var AgentCmd = cli.Command{
 	Name:   "agent",
@@ -211,6 +214,11 @@ func start(c *cli.Context) {
 
 		work := new(model.Work)
 		m.Unmarshal(work)
+		cancelStoreLock.Lock()
+		if _, ok := cancelStore[work.Job.ID]; ok {
+			work.Cancelled = true
+		}
+		cancelStoreLock.Unlock()
 		r.run(work)
 	}
 
@@ -252,8 +260,26 @@ func start(c *cli.Context) {
 			go handler(m) // HACK until we a channel based Subscribe implementation
 		}), opts...)
 
+		// ------- hack by kci for cancel job--------------
+		// 官方不支持，这是 hack 而且有泄漏
+		cancelFunc := func(m *stomp.Message) {
+			defer m.Release()
+			id := m.Header.GetInt64("job-id")
+			cancelStoreLock.Lock()
+			cancelStore[id] = ""
+			cancelStoreLock.Unlock()
+		}
+
+		// signal for canceling the build.
+		sub, err := client.Subscribe("/topic/cancel", stomp.HandlerFunc(cancelFunc))
+		if err != nil {
+			logrus.Errorf("Error subscribing to /topic/cancel. %s", err)
+		}
+		// ------- hack by kci for cancel job--------------
+
 		logger.Noticef("connection established, ready to process builds.")
 		<-client.Done()
+		client.Unsubscribe(sub)
 
 		logger.Warningf("connection interrupted, attempting to reconnect.")
 	}

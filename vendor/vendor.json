@@ -60,6 +60,18 @@
 			"revisionTime": "2016-10-24T22:21:04Z"
 		},
 		{
+			"checksumSHA1": "GhJlBiXlk+MridHStQN06pLvgj8=",
+			"path": "github.com/drone/envsubst",
+			"revision": "bd897237c21cfd23a0da7c734ff76f989e5f6d51",
+			"revisionTime": "2017-01-18T15:16:07Z"
+		},
+		{
+			"checksumSHA1": "LPKfsjm4AYVgCLVcAWnQdSpt5SA=",
+			"path": "github.com/drone/envsubst/parse",
+			"revision": "bd897237c21cfd23a0da7c734ff76f989e5f6d51",
+			"revisionTime": "2017-01-18T15:16:07Z"
+		},
+		{
 			"checksumSHA1": "RUI66baan5EsP/4GkbcrJQvAQR8=",
 			"path": "github.com/drone/mq/logger",
 			"revision": "0f296601feeed952dabd038793864acdbefe6dbe",
@@ -302,6 +314,12 @@
 			"path": "golang.org/x/net/context/ctxhttp",
 			"revision": "fb93926129b8ec0056f2f458b1f519654814edf0",
 			"revisionTime": "2016-04-13T08:48:50+10:00"
+		},
+		{
+			"checksumSHA1": "LvdVRE0FqdR68SvVpRkHs1rxhcA=",
+			"path": "golang.org/x/net/proxy",
+			"revision": "60c41d1de8da134c05b7b40154a9a82bf5b7edb9",
+			"revisionTime": "2017-01-10T03:16:11Z"
 		},
 		{
 			"path": "golang.org/x/oauth2",

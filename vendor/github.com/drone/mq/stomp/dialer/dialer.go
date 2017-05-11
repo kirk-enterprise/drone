@@ -15,16 +15,6 @@ const (
 	protoTCP   = "tcp"
 )
 
-// MustDial is a helper function that wraps Dial and panics if the
-// error is non-nil.
-func MustDial(target string) net.Conn {
-	conn, err := Dial(target)
-	if err != nil {
-		panic(err)
-	}
-	return conn
-}
-
 // Dial creates a client connection to the given target.
 func Dial(target string) (net.Conn, error) {
 	u, err := url.Parse(target)
@@ -49,13 +39,13 @@ func dialWebsocket(target *url.URL) (net.Conn, error) {
 	}
 	switch origin.Scheme {
 	case protoWS:
-		origin.Scheme = "http"
+		origin.Scheme = protoHTTP
 	case protoWSS:
-		origin.Scheme = "https"
+		origin.Scheme = protoHTTPS
 	}
 	return websocket.Dial(target.String(), "", origin.String())
 }
 
 func dialSocket(target *url.URL) (net.Conn, error) {
-	return net.Dial("tcp", target.Host)
+	return net.Dial(protoTCP, target.Host)
 }

@@ -2,10 +2,11 @@ package stomp
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"net"
 	"time"
+
+	"github.com/drone/mq/logger"
 )
 
 const (
@@ -16,6 +17,9 @@ const (
 var (
 	never    time.Time
 	deadline = time.Second * 5
+
+	heartbeatTime = time.Second * 30
+	heartbeatWait = time.Second * 60
 )
 
 type connPeer struct {
@@ -88,8 +92,12 @@ func (c *connPeer) readInto(messages chan<- *Message) {
 
 		buf, err := c.reader.ReadBytes(0)
 		if err != nil {
-			fmt.Println("readInto", err)
 			break
+		}
+		if len(buf) == 1 {
+			c.conn.SetReadDeadline(time.Now().Add(heartbeatWait))
+			logger.Verbosef("stomp: received heart-beat")
+			continue
 		}
 
 		msg := NewMessage()
@@ -106,16 +114,19 @@ func (c *connPeer) readInto(messages chan<- *Message) {
 
 func (c *connPeer) writeFrom(messages <-chan *Message) {
 	tick := time.NewTicker(time.Millisecond * 100).C
+	heartbeat := time.NewTicker(heartbeatTime).C
 
 loop:
 	for {
 		select {
 		case <-c.done:
 			break loop
+		case <-heartbeat:
+			logger.Verbosef("stomp: send heart-beat.")
+			c.writer.WriteByte(0)
 		case <-tick:
 			c.conn.SetWriteDeadline(time.Now().Add(deadline))
 			if err := c.writer.Flush(); err != nil {
-				fmt.Println("tick flush", err)
 				break loop
 			}
 			c.conn.SetWriteDeadline(never)

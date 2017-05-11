@@ -66,13 +66,15 @@ func (r *pipeline) run(w *model.Work) {
 	}
 
 	// signal for canceling the build.
-	sub, err := r.drone.Subscribe("/topic/cancel", stomp.HandlerFunc(cancelFunc))
-	if err != nil {
-		logrus.Errorf("Error subscribing to /topic/cancel. %s", err)
+	if w.Cancelled == false {
+		sub, err := r.drone.Subscribe("/topic/cancel", stomp.HandlerFunc(cancelFunc))
+		if err != nil {
+			logrus.Errorf("Error subscribing to /topic/cancel. %s", err)
+		}
+		defer func() {
+			r.drone.Unsubscribe(sub)
+		}()
 	}
-	defer func() {
-		r.drone.Unsubscribe(sub)
-	}()
 
 	a.Run(w, cancel)
 
@@ -81,6 +83,15 @@ func (r *pipeline) run(w *model.Work) {
 	// 		w.Repo.Owner, w.Repo.Name, w.Build.Number, w.Job.Number)
 	// }
 	// stream.Close()
+	// ------- hack by kci for cancel job--------------
+	if w.Cancelled == true {
+		go func() {
+			cancel <- true
+			logrus.Infof("Work is canceled during pending, Cancel build %s/%s#%d.%d",
+				w.Repo.Owner, w.Repo.Name, w.Build.Number, w.Job.Number)
+		}()
+	}
+	// ------- hack by kci for cancel job--------------
 
 	logrus.Infof("Finished build %s/%s#%d.%d",
 		w.Repo.Owner, w.Repo.Name, w.Build.Number, w.Job.Number)

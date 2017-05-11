@@ -208,6 +208,15 @@ func (a *Agent) prep(w *model.Work) (*yaml.Config, error) {
 	return conf, nil
 }
 
+func stopline(reason string) *build.Line {
+	return &build.Line{
+		Proc: "STOP",
+		Type: build.ProgressLine,
+		Time: 0,
+		Out:  "STOPED for reason : " + reason,
+	}
+}
+
 func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool) error {
 
 	conf := build.Config{
@@ -231,16 +240,21 @@ func (a *Agent) exec(spec *yaml.Config, payload *model.Work, cancel <-chan bool)
 		case <-pipeline.Done():
 			return pipeline.Err()
 		case <-cancel:
-			pipeline.Stop("termination request received, build cancelled")
-			return fmt.Errorf("termination request received, build cancelled")
+			pipeline.Stop()
+			reason := "termination request received, build cancelled"
+			a.Logger(stopline(reason))
+			return fmt.Errorf(reason)
 		case <-timeout:
-			pipeline.Stop("maximum time limit exceeded, build cancelled")
-			return fmt.Errorf("maximum time limit exceeded, build cancelled")
+			pipeline.Stop()
+			reason := "maximum time limit exceeded, build cancelled"
+			a.Logger(stopline(reason))
+			return fmt.Errorf(reason)
 		case <-time.After(a.Timeout):
-			pipeline.Stop("terminal inactive for long time, build cancelled")
-			return fmt.Errorf("terminal inactive for %v, build cancelled", a.Timeout)
+			pipeline.Stop()
+			reason := fmt.Sprintf("terminal inactive for %v, build cancelled", a.Timeout)
+			a.Logger(stopline(reason))
+			return fmt.Errorf(reason)
 		case <-pipeline.Next():
-
 			// TODO(bradrydzewski) this entire block of code should probably get
 			// encapsulated in the pipeline.
 			status := model.StatusSuccess

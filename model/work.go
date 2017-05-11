@@ -16,4 +16,7 @@ type Work struct {
 	System    *System   `json:"system"`
 	Secrets   []*Secret `json:"secrets"`
 	User      *User     `json:"user"`
+	// ------- hack by kci for cancel job--------------
+	Cancelled bool `json:"-"`
+	// ------- hack by kci for cancel job--------------
 }

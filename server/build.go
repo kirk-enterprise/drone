@@ -136,8 +136,8 @@ func DeleteBuild(c *gin.Context) {
 		return
 	}
 
-	if job.Status != model.StatusRunning {
-		c.String(400, "Cannot cancel a non-running build")
+	if job.Status != model.StatusRunning && job.Status != model.StatusPending {
+		c.String(400, "Cannot only cancel a running/pending build")
 		return
 	}
 

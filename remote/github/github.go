@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	// "errors"
 
 	"github.com/drone/drone/model"
 	"github.com/drone/drone/remote"
@@ -215,14 +216,44 @@ func (c *client) File(u *model.User, r *model.Repo, b *model.Build, f string) ([
 
 	opts := new(github.RepositoryContentGetOptions)
 	opts.Ref = b.Commit
-	if opts.Ref == "" && b.Ref != "" {
-		opts.Ref = b.Ref
-	}
 	data, _, _, err := client.Repositories.GetContents(r.Owner, r.Name, f, opts)
+	// #todo no retry, check first?
+	if err != nil && opts.Ref == "" {
+		pr, err := c.PullRequest(u, r, b)
+		if err != nil {
+			return nil, err
+		}
+		if pr.Head.SHA != nil {
+			opts.Ref = *pr.Head.SHA
+			data, _, _, err = client.Repositories.GetContents(r.Owner, r.Name, f, opts)
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
 	return data.Decode()
+}
+
+//refs/pull/%d/head
+func getCommitIdFromRef(ref string) (ret int) {
+	arr := strings.Split(ref, "/")
+	if len(arr) != 4 {
+		ret = -1
+	} else {
+		ret, _ = strconv.Atoi(arr[2])
+	}
+	return
+}
+
+func (c *client) PullRequest(u *model.User, r *model.Repo, b *model.Build) (pr *github.PullRequest, err error) {
+	client := c.newClientToken(u.Token)
+	number := getCommitIdFromRef(b.Ref)
+	// #todo
+	// if number <= 0 {
+	// 	return error
+	// }
+	pr, _, err = client.PullRequests.Get(r.Owner, r.Name, number)
+	return
 }
 
 // Netrc returns a netrc file capable of authenticating GitHub requests and
